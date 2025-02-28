@@ -28,13 +28,13 @@ const Chatbot: React.FC = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<Model>({ id: 'gemini-flash', name: 'Gemini 2.0 Flash Lite' });
+  const [selectedModel, setSelectedModel] = useState<Model>({ id: 'llama-3.3-70b-versatile', name: 'llama-3.3-70b-versatile' });
 
   const models: Model[] = [
-    { id: 'gemini-flash', name: 'Gemini 2.0 Flash Lite' },
-    { id: 'gemini-pro', name: 'Gemini 2.0 Pro' },
-    { id: 'gemini-ultra', name: 'Gemini 2.0 Ultra' },
-    { id: 'claude-3', name: 'Claude 3' },
+    { id: 'llama-3.3-70b-versatile', name: 'llama-3.3-70b-versatile' },
+    { id: 'gemma2-9b-it', name: 'gemma2-9b-it' },
+    { id: 'deepseek-r1-distill-llama-70b', name: 'deepseek-r1-distill-llama-70b' },
+    { id: 'llama-3.2-90b-vision-preview', name: 'llama-3.2-90b-vision-preview' },
   ];
 
   const exampleChats: Chat[] = [
@@ -43,26 +43,51 @@ const Chatbot: React.FC = () => {
 
   const handleSendMessage = () => {
     if (inputMessage.trim()) {
+      // Create and display user's message
       const newMessage: Message = {
         id: Date.now(),
         text: inputMessage,
         sender: 'user',
         timestamp: new Date()
       };
-
-      setMessages([...messages, newMessage]);
+      setMessages(prev => [...prev, newMessage]);
+      const questionToSend = inputMessage;
       setInputMessage('');
 
-      // Simulate bot response after a short delay
-      setTimeout(() => {
+      // Call the API for all models using the selected model's id
+      fetch('http://127.0.0.1:5000/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          question: questionToSend,
+          backend: "Groq",
+          engine: selectedModel.id,
+          temperature: 0.7,
+          max_tokens: 150
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
         const botResponse: Message = {
           id: Date.now() + 1,
-          text: "This is a simulated response from the chatbot.",
+          text: data.response,
           sender: 'bot',
           timestamp: new Date()
         };
         setMessages(prev => [...prev, botResponse]);
-      }, 1000);
+      })
+      .catch(error => {
+        console.error("Error:", error);
+        const errorMessage: Message = {
+          id: Date.now() + 2,
+          text: "Sorry, there was an error retrieving the response.",
+          sender: 'bot',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      });
     }
   };
 
@@ -77,7 +102,7 @@ const Chatbot: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-[#1a1a1a] text-white">
-      {/* Sidebar - increased width from w-48 to w-64 */}
+      {/* Sidebar */}
       <div className={`${sidebarOpen ? 'w-64' : 'w-0'} transition-all duration-300 border-r border-gray-800 flex flex-col overflow-hidden`}>
         <div className="p-4 border-b border-gray-800 flex items-center">
           <h1 className="text-lg font-medium">LAG.AI</h1>
@@ -86,7 +111,6 @@ const Chatbot: React.FC = () => {
             <Edit className="w-5 h-5 text-gray-400" />
           </div>
         </div>
-
         <div className="flex-1 overflow-y-auto">
           {/* Chat history */}
           {exampleChats.map(chat => (
@@ -96,7 +120,6 @@ const Chatbot: React.FC = () => {
             </div>
           ))}
         </div>
-
         <div className="p-4 border-t border-gray-800">
           <button className="w-full text-left text-gray-400">Login</button>
         </div>
@@ -116,14 +139,12 @@ const Chatbot: React.FC = () => {
           {messages.map(message => (
             <div
               key={message.id}
-              className={`mb-4 p-3 rounded-lg max-w-3/4 ${message.sender === 'user' ? 'ml-auto bg-purple-700' : 'bg-gray-800'
-                }`}
+              className={`mb-4 p-3 rounded-lg max-w-3/4 ${message.sender === 'user' ? 'ml-auto bg-purple-700' : 'bg-gray-800'}`}
             >
               {message.text}
             </div>
           ))}
         </div>
-
 
         {/* Message Input */}
         <div className="p-4 border-t border-gray-800 flex items-center">
@@ -135,7 +156,6 @@ const Chatbot: React.FC = () => {
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
           />
-
           <div className="flex items-center relative">
             {/* Custom Dropdown */}
             <div className="relative mr-2">
@@ -146,7 +166,6 @@ const Chatbot: React.FC = () => {
                 <span className="text-gray-300 whitespace-nowrap">{selectedModel.name}</span>
                 <ChevronDown className="w-4 h-4 text-gray-400" />
               </button>
-
               {isDropdownOpen && (
                 <div className="absolute bottom-full mb-1 right-0 w-48 bg-gray-800 rounded-md shadow-lg border border-gray-700 z-10">
                   <div className="py-1">
@@ -154,8 +173,7 @@ const Chatbot: React.FC = () => {
                       <button
                         key={model.id}
                         onClick={() => selectModel(model)}
-                        className={`block w-full text-left px-4 py-2 text-sm ${selectedModel.id === model.id ? 'bg-gray-700 text-white' : 'text-gray-300 hover:bg-gray-700'
-                          }`}
+                        className={`block w-full text-left px-4 py-2 text-sm ${selectedModel.id === model.id ? 'bg-gray-700 text-white' : 'text-gray-300 hover:bg-gray-700'}`}
                       >
                         {model.name}
                       </button>
@@ -164,7 +182,6 @@ const Chatbot: React.FC = () => {
                 </div>
               )}
             </div>
-
             <button
               onClick={handleSendMessage}
               className="w-10 h-10 rounded-full flex items-center justify-center transition-colors"
