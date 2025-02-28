@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { Search, Edit, ChevronLeft, Send, Menu, X, ChevronDown } from 'lucide-react';
+import { Search, Edit, Send, Menu, X, ChevronDown } from 'lucide-react';
 
 interface Message {
   id: number;
