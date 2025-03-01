@@ -14,12 +14,15 @@
     "@radix-ui/react-slot": "^1.1.2",
     "@supabase/supabase-js": "^2.49.1",
     "firebase": "^11.4.0",
+    "highlight.js": "^11.11.1",
     "lucide-react": "^0.477.0",
     "nanoid": "^5.1.2",
     "next": "15.2.0",
     "posthog-js": "^1.224.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-markdown": "^10.0.0",
+    "rehype-highlight": "^7.0.2",
     "supabase": "^2.15.8"
   },
   "devDependencies": {

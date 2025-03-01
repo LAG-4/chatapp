@@ -97,15 +97,13 @@ export default function Chatbot() {
         { id: Date.now(), text, sender: "user", timestamp: new Date() }
       ]);
       // Simulate QnA API call
-      const res = await fetch("https://qna-chatbot-0uel.onrender.com/chat", {
+      const res = await fetch("http://127.0.0.1:5000/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           question: text,
           backend: "Groq",
           engine: selectedModel.id,
-          temperature: 0.7,
-          max_tokens: 150,
         }),
       });
       const data = await res.json();
@@ -134,15 +132,14 @@ export default function Chatbot() {
     ]);
 
     // QnA API for bot response
-    const res = await fetch("https://qna-chatbot-0uel.onrender.com/chat", {
+    const res = await fetch("http://127.0.0.1:5000/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         question: text,
         backend: "Groq",
         engine: selectedModel.id,
-        temperature: 0.7,
-        max_tokens: 150,
+
       }),
     });
     const data = await res.json();

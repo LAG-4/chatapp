@@ -4,6 +4,7 @@ import { Fira_Code, Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import UserSync from "@/components/UserSync";
 import { PostHogProvider } from "./providers";
+import 'highlight.js/styles/github-dark.css';
 
 const firaCode = Fira_Code({
   variable: "--font-fira-code",
