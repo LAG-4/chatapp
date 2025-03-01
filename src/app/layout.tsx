@@ -1,20 +1,14 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Fira_Code, Geist, Geist_Mono } from "next/font/google";
-import {
-  ClerkProvider,
-  SignInButton,
-  SignUpButton,
-  SignedIn,
-  SignedOut,
-  UserButton,
-} from '@clerk/nextjs';
+import { ClerkProvider } from "@clerk/nextjs";
 import UserSync from "@/components/UserSync";
+import { PostHogProvider } from "./providers";
 
 const firaCode = Fira_Code({
   variable: "--font-fira-code",
   subsets: ["latin"],
-  weight: ['400', '500', '600', '700'],
+  weight: ["400", "500", "600", "700"],
 });
 
 const geistSans = Geist({
@@ -34,18 +28,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <ClerkProvider>
       <html lang="en">
         <body
           className={`${geistSans.variable} ${geistMono.variable} ${firaCode.variable} font-sans`}
         >
-          {/* UserSync runs silently to sync signed-in users with Firestore */}
-          <UserSync />
-          {children}
+          <PostHogProvider>
+            <UserSync />
+            {children}
+          </PostHogProvider>
         </body>
       </html>
     </ClerkProvider>
