@@ -1,13 +1,15 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Menu, X } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import Sidebar from "./Sidebar";
 import ChatWindow from "./ChatWindow";
-import MessageInput from "./MessageInput"; // updated version below
+import MessageInput from "./MessageInput";
 import {
+  fetchChats,
+  createChat,
   addMessageToChat,
-  fetchMessagesForChat
+  fetchMessagesForChat,
+  deleteChatWithMessages
 } from "../lib/chatService";
 
 interface Model {
@@ -16,18 +18,22 @@ interface Model {
 }
 
 export default function Chatbot() {
-  const { isSignedIn, user } = useUser();
+  const { user } = useUser();
+
+  // Sidebar & Chat states
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [chats, setChats] = useState<any[]>([]);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
+
+  // Messages for the selected chat
   const [messages, setMessages] = useState<any[]>([]);
 
-  // Model selection states
+  // Model selection
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedModel, setSelectedModel] = useState<Model>({
     id: "llama-3.3-70b-versatile",
     name: "llama-3.3-70b-versatile",
   });
-
   const models: Model[] = [
     { id: "llama-3.3-70b-versatile", name: "llama-3.3-70b-versatile" },
     { id: "gemma2-9b-it", name: "gemma2-9b-it" },
@@ -35,94 +41,112 @@ export default function Chatbot() {
     { id: "llama-3.2-90b-vision-preview", name: "llama-3.2-90b-vision-preview" },
   ];
 
-  function toggleSidebar() {
-    setSidebarOpen(!sidebarOpen);
+  // 1) Fetch the user’s chats once on mount or user change
+  async function refreshChats() {
+    if (!user) return;
+    const userChats = await fetchChats(user.id);
+    setChats(userChats);
   }
+  useEffect(() => {
+    refreshChats();
+  }, [user]);
 
-  function handleSelectModel(model: Model) {
-    setSelectedModel(model);
-  }
-
-  // Load messages for the selected chat
+  // 2) Fetch messages only when chat changes
   useEffect(() => {
     async function loadMessages() {
-      if (user && selectedChatId) {
-        const msgs = await fetchMessagesForChat(user.id, selectedChatId);
-        setMessages(msgs);
-      }
+      if (!user || !selectedChatId) return;
+      const msgs = await fetchMessagesForChat(user.id, selectedChatId);
+      setMessages(msgs);
     }
     loadMessages();
   }, [selectedChatId, user]);
 
-  // Send message to Firestore + QnA API
+  // 3) Send a message (no immediate re-fetch)
   async function handleSendMessage(text: string) {
-    if (!user || !selectedChatId) return;
+    if (!user) return;
 
-    // 1) Add user message
-    await addMessageToChat(user.id, selectedChatId, text, "user");
-    setMessages(prev => [
+    // Create a chat if none is selected
+    let chatId = selectedChatId;
+    if (!chatId) {
+      chatId = await createChat(user.id);
+      setSelectedChatId(chatId);
+      // Refresh the chat list so the new chat appears in the sidebar
+      await refreshChats();
+    }
+
+    // a) Add the user’s message to Firestore
+    await addMessageToChat(user.id, chatId, text, "user");
+    // b) Immediately update local state (no re-fetch)
+    setMessages((prev) => [
       ...prev,
-      { id: Date.now(), text, sender: "user", timestamp: new Date() }
+      { id: Date.now(), text, sender: "user", timestamp: new Date() },
     ]);
 
-    // 2) Call QnA API for bot response
+    // c) Get the bot response from your QnA API
     const res = await fetch("https://qna-chatbot-0uel.onrender.com/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         question: text,
         backend: "Groq",
-        engine: selectedModel.id, // use the selected model
+        engine: selectedModel.id,
         temperature: 0.7,
         max_tokens: 150,
       }),
     });
     const data = await res.json();
 
-    // 3) Add bot message
-    await addMessageToChat(user.id, selectedChatId, data.response, "bot");
-    setMessages(prev => [
+    // d) Add the bot’s response to Firestore
+    await addMessageToChat(user.id, chatId, data.response, "bot");
+    // e) Immediately update local state
+    setMessages((prev) => [
       ...prev,
-      { id: Date.now() + 1, text: data.response, sender: "bot", timestamp: new Date() }
+      { id: Date.now() + 1, text: data.response, sender: "bot", timestamp: new Date() },
     ]);
+  }
+
+  // 4) Delete chat + messages
+  async function handleDeleteChat(chatId: string) {
+    if (!user) return;
+    await deleteChatWithMessages(user.id, chatId);
+    setChats((prev) => prev.filter((chat) => chat.id !== chatId));
+    if (selectedChatId === chatId) {
+      setSelectedChatId(null);
+      setMessages([]);
+    }
+  }
+
+  // 5) Model selection
+  function onSelectModel(model: Model) {
+    setSelectedModel(model);
+    setIsDropdownOpen(false);
+  }
+
+  // 6) Toggle the sidebar
+  function toggleSidebar() {
+    setSidebarOpen(!sidebarOpen);
   }
 
   return (
     <div className="flex h-screen bg-[#1a1a1a] text-white">
       <Sidebar
+        chats={chats}
         selectedChatId={selectedChatId}
         onSelectChat={setSelectedChatId}
+        onDeleteChat={handleDeleteChat}
         sidebarOpen={sidebarOpen}
         toggleSidebar={toggleSidebar}
       />
 
-      {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
-        {/* Top Bar */}
-        <div className="p-4 border-b border-gray-800 flex items-center">
-          <button onClick={toggleSidebar} className="mr-2">
-            {sidebarOpen ? (
-              <X className="w-5 h-5 text-gray-400" />
-            ) : (
-              <Menu className="w-5 h-5 text-gray-400" />
-            )}
-          </button>
-          <span className="text-gray-300 text-sm">
-            {selectedChatId ? `Chat: ${selectedChatId}` : "No chat selected"}
-          </span>
-        </div>
-
-        {/* Messages */}
         <ChatWindow messages={messages} />
-
-        {/* Combined Model Selection + Message Input + Send Button */}
         <MessageInput
           onSend={handleSendMessage}
           models={models}
           selectedModel={selectedModel}
           isDropdownOpen={isDropdownOpen}
           setIsDropdownOpen={setIsDropdownOpen}
-          onSelectModel={handleSelectModel}
+          onSelectModel={onSelectModel}
         />
       </div>
     </div>

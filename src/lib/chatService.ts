@@ -10,10 +10,32 @@ import {
   orderBy,
   serverTimestamp,
   getDoc,
+  deleteDoc,
+  writeBatch,
 } from "firebase/firestore";
 import app from "@/lib/firebaseClient";
 
+
+
 const db = getFirestore(app);
+
+export async function deleteChat(userId: string, chatId: string) {
+    const chatRef = doc(db, `users/${userId}/chats/${chatId}`);
+    await deleteDoc(chatRef);
+}
+
+export async function deleteChatWithMessages(userId: string, chatId: string) {
+    const chatRef = doc(db, `users/${userId}/chats/${chatId}`);
+    const messagesRef = collection(db, `users/${userId}/chats/${chatId}/messages`);
+  
+    const batch = writeBatch(db);
+    const snapshot = await getDocs(messagesRef);
+    snapshot.forEach((msgDoc) => {
+      batch.delete(msgDoc.ref);
+    });
+    batch.delete(chatRef);
+    await batch.commit();
+  }
 
 export async function createChat(userId: string) {
   const chatId = nanoid(10);
