@@ -11,6 +11,7 @@ import {
   fetchMessagesForChat,
   deleteChatWithMessages
 } from "../lib/chatService";
+import { nanoid } from "nanoid";
 
 interface Model {
   id: string;
@@ -18,10 +19,13 @@ interface Model {
 }
 
 export default function Chatbot() {
-  const { user } = useUser();
+  // Clerk auth
+  const { user, isSignedIn } = useUser();
 
   // Sidebar & Chat states
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // We'll store "chats" in state whether user is signed in or not
   const [chats, setChats] = useState<any[]>([]);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
 
@@ -34,6 +38,7 @@ export default function Chatbot() {
     id: "llama-3.3-70b-versatile",
     name: "llama-3.3-70b-versatile",
   });
+
   const models: Model[] = [
     { id: "llama-3.3-70b-versatile", name: "llama-3.3-70b-versatile" },
     { id: "gemma2-9b-it", name: "gemma2-9b-it" },
@@ -41,48 +46,94 @@ export default function Chatbot() {
     { id: "llama-3.2-90b-vision-preview", name: "llama-3.2-90b-vision-preview" },
   ];
 
-  // 1) Fetch the user’s chats once on mount or user change
+  /* 
+   * 1) If user is signed in, fetch their Firestore chats; 
+   *    otherwise, do nothing (guest user sees only local data).
+   */
   async function refreshChats() {
-    if (!user) return;
-    const userChats = await fetchChats(user.id);
-    setChats(userChats);
+    if (isSignedIn && user) {
+      const userChats = await fetchChats(user.id);
+      setChats(userChats);
+    }
   }
   useEffect(() => {
     refreshChats();
-  }, [user]);
+  }, [user, isSignedIn]);
 
-  // 2) Fetch messages only when chat changes
+  /*
+   * 2) Load messages from Firestore only if user is signed in 
+   *    and a chat is selected. If not signed in, messages are local only.
+   */
   useEffect(() => {
     async function loadMessages() {
-      if (!user || !selectedChatId) return;
+      if (!isSignedIn || !user || !selectedChatId) return;
       const msgs = await fetchMessagesForChat(user.id, selectedChatId);
       setMessages(msgs);
     }
     loadMessages();
-  }, [selectedChatId, user]);
+  }, [selectedChatId, user, isSignedIn]);
 
-  // 3) Send a message (no immediate re-fetch)
+  /*
+   * 3) Handle sending a message:
+   *    - If user is signed in => Firestore
+   *    - If not => local-only ephemeral chat & messages
+   */
   async function handleSendMessage(text: string) {
-    if (!user) return;
+    // If not signed in, handle ephemeral chat
+    if (!isSignedIn || !user) {
+      let chatId = selectedChatId;
+      // Create ephemeral chat if none selected
+      if (!chatId) {
+        chatId = "guest-" + nanoid(6);
+        setSelectedChatId(chatId);
+        setChats(prev => [
+          ...prev,
+          { id: chatId, title: "New Chat (Guest)", createdAt: new Date().toISOString() }
+        ]);
+      }
+      // Add user message to local state
+      setMessages(prev => [
+        ...prev,
+        { id: Date.now(), text, sender: "user", timestamp: new Date() }
+      ]);
+      // Simulate QnA API call
+      const res = await fetch("https://qna-chatbot-0uel.onrender.com/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question: text,
+          backend: "Groq",
+          engine: selectedModel.id,
+          temperature: 0.7,
+          max_tokens: 150,
+        }),
+      });
+      const data = await res.json();
+      // Add bot reply to local state
+      setMessages(prev => [
+        ...prev,
+        { id: Date.now() + 1, text: data.response, sender: "bot", timestamp: new Date() }
+      ]);
+      return;
+    }
 
-    // Create a chat if none is selected
+    // If user is signed in => Firestore logic
     let chatId = selectedChatId;
     if (!chatId) {
+      // create a new Firestore chat if none is selected
       chatId = await createChat(user.id);
       setSelectedChatId(chatId);
-      // Refresh the chat list so the new chat appears in the sidebar
       await refreshChats();
     }
 
-    // a) Add the user’s message to Firestore
+    // Add user message to Firestore
     await addMessageToChat(user.id, chatId, text, "user");
-    // b) Immediately update local state (no re-fetch)
-    setMessages((prev) => [
+    setMessages(prev => [
       ...prev,
-      { id: Date.now(), text, sender: "user", timestamp: new Date() },
+      { id: Date.now(), text, sender: "user", timestamp: new Date() }
     ]);
 
-    // c) Get the bot response from your QnA API
+    // QnA API for bot response
     const res = await fetch("https://qna-chatbot-0uel.onrender.com/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -96,33 +147,46 @@ export default function Chatbot() {
     });
     const data = await res.json();
 
-    // d) Add the bot’s response to Firestore
+    // Add bot message to Firestore
     await addMessageToChat(user.id, chatId, data.response, "bot");
-    // e) Immediately update local state
-    setMessages((prev) => [
+    setMessages(prev => [
       ...prev,
-      { id: Date.now() + 1, text: data.response, sender: "bot", timestamp: new Date() },
+      { id: Date.now() + 1, text: data.response, sender: "bot", timestamp: new Date() }
     ]);
   }
 
-  // 4) Delete chat + messages
+  /*
+   * 4) Delete chat:
+   *    - If user not signed in => remove from local array
+   *    - If user is signed in => remove from Firestore + local
+   */
   async function handleDeleteChat(chatId: string) {
-    if (!user) return;
+    if (!isSignedIn || !user) {
+      // local removal only
+      setChats(prev => prev.filter(chat => chat.id !== chatId));
+      if (selectedChatId === chatId) {
+        setSelectedChatId(null);
+        setMessages([]);
+      }
+      return;
+    }
+
+    // Signed in => remove from Firestore + local
     await deleteChatWithMessages(user.id, chatId);
-    setChats((prev) => prev.filter((chat) => chat.id !== chatId));
+    setChats(prev => prev.filter(chat => chat.id !== chatId));
     if (selectedChatId === chatId) {
       setSelectedChatId(null);
       setMessages([]);
     }
   }
 
-  // 5) Model selection
+  // Model selection
   function onSelectModel(model: Model) {
     setSelectedModel(model);
     setIsDropdownOpen(false);
   }
 
-  // 6) Toggle the sidebar
+  // Toggle sidebar
   function toggleSidebar() {
     setSidebarOpen(!sidebarOpen);
   }
