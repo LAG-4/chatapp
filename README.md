@@ -7,10 +7,14 @@
 - [ ] Add option to upload documents
 - [x] Add authentication
 - [ ] Add your own API key
-- [ ] Add markdown support in chatbot responses
+- [x] Add markdown support in chatbot responses
 - [ ] Add coming soon page
 - [ ] Add chat limits
-- [ ] Implement chat history for bot
+- [x] Implement chat history for bot
 - [x] Implement chat history
 - [ ] Enable google AdSense
 - [x] Initialize api to wake up server
+- [x] Implement posthog
+- [ ] Add chat sidebar summaries
+- [ ] Maybe try adding a thinking prompt block
+- [ ] Quality of life features like auto scrolling and loading response
