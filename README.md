@@ -1,4 +1,5 @@
 ## Chatbot App
+# Aryan
 
 - [x] Make good looking frontent for chat
 - [x] Working chat with one model

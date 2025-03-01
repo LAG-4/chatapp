@@ -22,14 +22,29 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Tailwind directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Custom font variable */
 :root {
-    --font-fira-code: font-sans;
+  --font-fira-code: font-sans;
 }
 
 body {
   font-family: var(--font-fira-code);
+}
+
+/* 
+  Responsive rule for smaller screens:
+  Adjust font size and padding below 640px 
+  (Tailwind’s default "sm" breakpoint).
+*/
+@media (max-width: 640px) {
+  body {
+    font-size: 14px;    /* e.g. 14px on mobile */
+    padding: 1rem;      /* add extra padding if desired */
+  }
 }
