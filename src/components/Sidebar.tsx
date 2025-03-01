@@ -1,3 +1,4 @@
+// components/Sidebar.tsx
 "use client";
 import React from "react";
 import { useUser, SignInButton, UserButton } from "@clerk/nextjs";

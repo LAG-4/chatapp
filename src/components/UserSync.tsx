@@ -1,8 +1,9 @@
+// components/UserSync.tsx
 "use client";
 import React, { useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
-import app from "@/lib/firebaseClient";
+import app from "../lib/firebaseClient";
 
 export default function UserSync() {
   const { isSignedIn, user } = useUser();

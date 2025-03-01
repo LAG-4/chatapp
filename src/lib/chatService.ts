@@ -1,3 +1,4 @@
+// lib/chatService.ts
 import { nanoid } from "nanoid";
 import {
   getFirestore,
@@ -9,33 +10,30 @@ import {
   query,
   orderBy,
   serverTimestamp,
-  getDoc,
   deleteDoc,
   writeBatch,
 } from "firebase/firestore";
-import app from "@/lib/firebaseClient";
-
-
+import app from "./firebaseClient";
 
 const db = getFirestore(app);
 
 export async function deleteChat(userId: string, chatId: string) {
-    const chatRef = doc(db, `users/${userId}/chats/${chatId}`);
-    await deleteDoc(chatRef);
+  const chatRef = doc(db, `users/${userId}/chats/${chatId}`);
+  await deleteDoc(chatRef);
 }
 
 export async function deleteChatWithMessages(userId: string, chatId: string) {
-    const chatRef = doc(db, `users/${userId}/chats/${chatId}`);
-    const messagesRef = collection(db, `users/${userId}/chats/${chatId}/messages`);
-  
-    const batch = writeBatch(db);
-    const snapshot = await getDocs(messagesRef);
-    snapshot.forEach((msgDoc) => {
-      batch.delete(msgDoc.ref);
-    });
-    batch.delete(chatRef);
-    await batch.commit();
-  }
+  const chatRef = doc(db, `users/${userId}/chats/${chatId}`);
+  const messagesRef = collection(db, `users/${userId}/chats/${chatId}/messages`);
+
+  const batch = writeBatch(db);
+  const snapshot = await getDocs(messagesRef);
+  snapshot.forEach((msgDoc) => {
+    batch.delete(msgDoc.ref);
+  });
+  batch.delete(chatRef);
+  await batch.commit();
+}
 
 export async function createChat(userId: string) {
   const chatId = nanoid(10);
@@ -51,7 +49,7 @@ export async function fetchChats(userId: string) {
   const chatsRef = collection(db, `users/${userId}/chats`);
   const q = query(chatsRef, orderBy("createdAt", "desc"));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({
+  return snapshot.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
   }));
@@ -75,7 +73,7 @@ export async function fetchMessagesForChat(userId: string, chatId: string) {
   const messagesRef = collection(db, `users/${userId}/chats/${chatId}/messages`);
   const q = query(messagesRef, orderBy("timestamp", "asc"));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({
+  return snapshot.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
   }));

@@ -1,8 +1,8 @@
+// components/MessageInput.tsx
 "use client";
 import React, { useState } from "react";
 import { ChevronDown, Send } from "lucide-react";
 
-// Reuse the same Model interface from Chatbot, or define here:
 interface Model {
   id: string;
   name: string;
@@ -42,7 +42,6 @@ export default function MessageInput({
 
   return (
     <div className="p-4 border-t border-gray-800 flex items-center">
-      {/* Text Input */}
       <input
         type="text"
         className="flex-1 bg-transparent border-none outline-none"
@@ -51,10 +50,7 @@ export default function MessageInput({
         onChange={(e) => setInputValue(e.target.value)}
         onKeyPress={handleKeyPress}
       />
-
-      {/* Right side: Model Dropdown + Send Button */}
       <div className="flex items-center relative">
-        {/* Model Dropdown */}
         <div className="relative mr-2">
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -65,7 +61,6 @@ export default function MessageInput({
             </span>
             <ChevronDown className="w-4 h-4 text-gray-400" />
           </button>
-
           {isDropdownOpen && (
             <div className="absolute bottom-full mb-1 right-0 w-48 bg-gray-800 rounded-md shadow-lg border border-gray-700 z-10">
               <div className="py-1">
@@ -74,7 +69,7 @@ export default function MessageInput({
                     key={model.id}
                     onClick={() => {
                       onSelectModel(model);
-                      setIsDropdownOpen(false); // Close the dropdown
+                      setIsDropdownOpen(false);
                     }}
                     className={`block w-full text-left px-4 py-2 text-sm ${
                       selectedModel.id === model.id
@@ -89,8 +84,6 @@ export default function MessageInput({
             </div>
           )}
         </div>
-
-        {/* Send Button */}
         <button
           onClick={handleSend}
           className="w-10 h-10 rounded-full flex items-center justify-center transition-colors"
