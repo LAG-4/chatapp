@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import { Search, Edit, Send, Menu, X, ChevronDown } from 'lucide-react';
+import { SignInButton } from '@clerk/nextjs'
 
 interface Message {
   id: number;
@@ -55,7 +56,7 @@ const Chatbot: React.FC = () => {
       setInputMessage('');
 
       // Call the API for all models using the selected model's id
-      fetch('http://127.0.0.1:5000/chat', {
+      fetch('https://qna-chatbot-0uel.onrender.com/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -121,7 +122,7 @@ const Chatbot: React.FC = () => {
           ))}
         </div>
         <div className="p-4 border-t border-gray-800">
-          <button className="w-full text-left text-gray-400">Login</button>
+        <SignInButton/>
         </div>
       </div>
 

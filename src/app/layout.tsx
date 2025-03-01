@@ -1,7 +1,14 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Fira_Code, Geist, Geist_Mono } from "next/font/google";
-
+import {
+  ClerkProvider,
+  SignInButton,
+  SignUpButton,
+  SignedIn,
+  SignedOut,
+  UserButton,
+} from '@clerk/nextjs'
 const firaCode = Fira_Code({
   variable: "--font-fira-code",
   subsets: ["latin"],
@@ -29,11 +36,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    <ClerkProvider>
     <html lang="en">
      <body
   className={`${geistSans.variable} ${geistMono.variable} ${firaCode.variable} font-sans`}>
         {children}
       </body>
     </html>
+    </ClerkProvider>
   );
 }
