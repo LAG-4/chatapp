@@ -5,5 +5,11 @@
 - [x] Add model change options
 - [ ] Add database
 - [ ] Add option to upload documents
-- [ ] Add authentication
+- [x] Add authentication
 - [ ] Add your own API key
+- [ ] Add markdown support in chatbot responses
+- [ ] Add coming soon page
+- [ ] Add chat limits
+- [ ] Implement chat history
+- [ ] Enable google AdSense
+- [x] Initialize api to wake up server

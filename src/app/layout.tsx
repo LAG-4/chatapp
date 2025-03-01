@@ -8,7 +8,9 @@ import {
   SignedIn,
   SignedOut,
   UserButton,
-} from '@clerk/nextjs'
+} from '@clerk/nextjs';
+import UserSync from "@/components/UserSync";
+
 const firaCode = Fira_Code({
   variable: "--font-fira-code",
   subsets: ["latin"],
@@ -37,12 +39,15 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-    <html lang="en">
-     <body
-  className={`${geistSans.variable} ${geistMono.variable} ${firaCode.variable} font-sans`}>
-        {children}
-      </body>
-    </html>
+      <html lang="en">
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} ${firaCode.variable} font-sans`}
+        >
+          {/* UserSync runs silently to sync signed-in users with Firestore */}
+          <UserSync />
+          {children}
+        </body>
+      </html>
     </ClerkProvider>
   );
 }
