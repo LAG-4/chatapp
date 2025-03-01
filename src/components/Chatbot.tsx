@@ -31,14 +31,14 @@ export default function Chatbot() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedModel, setSelectedModel] = useState<Model>({
     id: "deepseek-r1-distill-llama-70b",
-    name: "deepseek-r1-distill-llama-70b",
+    name: "DEEPSEEK R1(REASONING)",
   });
 
   const models: Model[] = [
-    { id: "llama-3.3-70b-versatile", name: "llama-3.3-70b-versatile" },
-    { id: "gemma2-9b-it", name: "gemma2-9b-it" },
-    { id: "deepseek-r1-distill-llama-70b", name: "deepseek-r1-distill-llama-70b" },
-    { id: "llama-3.2-90b-vision-preview", name: "llama-3.2-90b-vision-preview" },
+    { id: "llama-3.3-70b-versatile", name: "LLAMA 3.3" },
+    { id: "gemma2-9b-it", name: "GOOGLE GEMMA 2" },
+    { id: "deepseek-r1-distill-llama-70b", name: "DEEPSEEK R1(REASONING)" },
+    { id: "llama-3.2-90b-vision-preview", name: "LLAMA 3.2" },
   ];
 
   // Refresh chats from Firestore (if signed in)
