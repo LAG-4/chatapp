@@ -14,6 +14,7 @@ import {
 export interface Model {
   id: string;
   name: string;
+  backend?: string;
 }
 
 export function useChatLogic() {
@@ -29,14 +30,28 @@ export function useChatLogic() {
   const [selectedModel, setSelectedModel] = useState<Model>({
     id: "llama-3.3-70b-versatile",
     name: "LLAMA 3.3",
+    backend: "Groq",
   });
 
   // Model options
   const models: Model[] = [
-    { id: "llama-3.3-70b-versatile", name: "LLAMA 3.3" },
-    { id: "gemma2-9b-it", name: "GOOGLE GEMMA 2" },
-    { id: "deepseek-r1-distill-llama-70b", name: "DEEPSEEK R1(REASONING)" },
-    { id: "llama-3.2-90b-vision-preview", name: "LLAMA 3.2" },
+    { id: "llama-3.3-70b-versatile", name: "LLAMA 3.3", backend: "Groq" },
+    { id: "gemma2-9b-it", name: "GOOGLE GEMMA 2", backend: "Groq" },
+    {
+      id: "deepseek-r1-distill-llama-70b",
+      name: "DEEPSEEK R1(REASONING)",
+      backend: "Groq",
+    },
+    {
+      id: "llama-3.2-90b-vision-preview",
+      name: "LLAMA 3.2",
+      backend: "Groq",
+    },
+    {
+      id: "anthropic/claude-3.7-sonnet",
+      name: "Claude 3.7",
+      backend: "claude-3.7-sonnet", // Must match the Flask code's `elif backend == "Claude":`
+    },
   ];
 
   // Fetch user chats if signed in
@@ -75,58 +90,71 @@ export function useChatLogic() {
           { id: chatId, title: "New Chat (Guest)", createdAt: new Date().toISOString() },
         ]);
       }
+  
+      // Add user's message to local state
       setMessages((prev) => [
         ...prev,
         { id: Date.now(), text, sender: "user", timestamp: new Date() },
       ]);
-      const res = await fetch("https://qna-chatbot-0uel.onrender.com/chat", {
+  
+      // POST request to your Flask endpoint
+      const res = await fetch("http://127.0.0.1:5000/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           session_id: chatId,
           question: text,
-          backend: "Groq",
-          engine: selectedModel.id,
+          backend: selectedModel.backend, // <-- Use the model's backend
+          engine: selectedModel.id,       // <-- Use the model's ID for the engine
         }),
       });
       const data = await res.json();
+  
+      // Add bot's response to local state
       setMessages((prev) => [
         ...prev,
         { id: Date.now() + 1, text: data.response, sender: "bot", timestamp: new Date() },
       ]);
       return;
     }
-
-    // 2. Signed-in logic (Firestore)
+  
+    // 2. Signed-in logic
     let chatId = selectedChatId;
     if (!chatId) {
       chatId = await createChat(user.id);
       setSelectedChatId(chatId);
       await refreshChats();
     }
+  
+    // Store user's message in Firestore
     await addMessageToChat(user.id, chatId, text, "user");
     setMessages((prev) => [
       ...prev,
       { id: Date.now(), text, sender: "user", timestamp: new Date() },
     ]);
-    const res = await fetch("https://qna-chatbot-0uel.onrender.com/chat", {
+  
+    // POST request to your Flask endpoint
+    const res = await fetch("http://127.0.0.1:5000/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         session_id: chatId,
         question: text,
-        backend: "Groq",
-        engine: selectedModel.id,
+        backend: selectedModel.backend, // <-- Use the model's backend
+        engine: selectedModel.id,       // <-- Use the model's ID for the engine
+        // If using OpenAI, also include: api_key: "YOUR_OPENAI_KEY"
       }),
     });
     const data = await res.json();
+  
+    // Store bot's response in Firestore
     await addMessageToChat(user.id, chatId, data.response, "bot");
     setMessages((prev) => [
       ...prev,
       { id: Date.now() + 1, text: data.response, sender: "bot", timestamp: new Date() },
     ]);
   }
-
+  
   // Handle deleting a chat
   async function handleDeleteChat(chatId: string) {
     // Guest logic

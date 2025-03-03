@@ -63,11 +63,12 @@ export async function addMessageToChat(
 ) {
   const messagesRef = collection(db, `users/${userId}/chats/${chatId}/messages`);
   await addDoc(messagesRef, {
-    text,
+    text: text ?? "",  // Use an empty string if text is undefined
     sender,
     timestamp: serverTimestamp(),
   });
 }
+
 
 export async function fetchMessagesForChat(userId: string, chatId: string) {
   const messagesRef = collection(db, `users/${userId}/chats/${chatId}/messages`);
