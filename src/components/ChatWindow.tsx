@@ -15,12 +15,20 @@ export default function ChatWindow({ messages }: ChatWindowProps) {
     return (
       <div className="flex-1 p-4 overflow-y-auto flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-3xl font-bold mb-2">Welcome to LAG.AI</h1>
+          <h1 className="text-3xl font-bold mb-2">
+            Welcome to the MultiChat App by{" "}
+            <a href="https://x.com/lag_aryan" style={{ color: "#70ec00" }}>
+              LAG
+            </a>
+          </h1>
           <h2 className="text-lg text-gray-300">
-            Your AI companion is ready to chat. Ask anything!
+            Your advanced AI conversation platform, ready to handle any question or topic.
           </h2>
           <h3 className="text-sm text-gray-300">
-            Access all frontier chat models in one place.
+            Access multiple frontier chat models (LLMs) in one place—from coding assistance to creative brainstorming.
+          </h3>
+          <h3 className="text-sm text-gray-300">
+            Unlock the power of next‐generation AI and experience seamless, intelligent conversations.
           </h3>
         </div>
       </div>
