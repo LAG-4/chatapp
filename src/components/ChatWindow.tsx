@@ -13,23 +13,25 @@ export default function ChatWindow({ messages }: ChatWindowProps) {
   // If there are no messages, display a welcome screen
   if (!messages || messages.length === 0) {
     return (
-      <div className="flex-1 p-4 overflow-y-auto flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold mb-2">
-            Welcome to the MultiChat App by{" "}
-            <a href="https://x.com/lag_aryan" style={{ color: "#70ec00" }}>
-              LAG
-            </a>
-          </h1>
-          <h2 className="text-lg text-gray-300">
-            Your advanced AI conversation platform, ready to handle any question or topic.
-          </h2>
-          <h3 className="text-sm text-gray-300">
-            Access multiple frontier chat models (LLMs) in one place—from coding assistance to creative brainstorming.
-          </h3>
-          <h3 className="text-sm text-gray-300">
-            Unlock the power of next‐generation AI and experience seamless, intelligent conversations.
-          </h3>
+      <div className="flex-1 relative h-[calc(100vh-8rem)]">
+        <div className="absolute inset-0 flex items-center justify-center p-4">
+          <div className="text-center max-w-2xl px-4">
+            <h1 className="text-3xl font-bold mb-6">
+              Welcome to the MultiChat App by{" "}
+              <a href="https://x.com/lag_aryan" style={{ color: "#70ec00" }}>
+                LAG
+              </a>
+            </h1>
+            <h2 className="text-lg text-gray-300 mb-4">
+              Your advanced AI conversation platform, ready to handle any question or topic.
+            </h2>
+            <h3 className="text-sm text-gray-300 mb-3">
+              Access multiple frontier chat models (LLMs) in one place—from coding assistance to creative brainstorming.
+            </h3>
+            <h3 className="text-sm text-gray-300">
+              Unlock the power of next‐generation AI and experience seamless, intelligent conversations.
+            </h3>
+          </div>
         </div>
       </div>
     );

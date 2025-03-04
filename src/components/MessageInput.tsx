@@ -41,17 +41,17 @@ export default function MessageInput({
   }
 
   return (
-    <div className="p-4 border-t border-gray-800 flex items-center">
-      <input
-        type="text"
-        className="flex-1 bg-transparent border-none outline-none"
-        placeholder="Type your message..."
-        value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
-        onKeyPress={handleKeyPress}
-      />
-      <div className="flex items-center relative">
-        <div className="relative mr-2">
+    <div className="p-4 border-t border-gray-800">
+      <div className="flex items-center gap-2 max-w-full">
+        <input
+          type="text"
+          className="flex-1 min-w-0 bg-transparent border-none outline-none"
+          placeholder="Type your message..."
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyPress={handleKeyPress}
+        />
+        <div className="flex-shrink-0 relative">
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             className="flex items-center space-x-1 bg-gray-800 hover:bg-gray-700 text-sm rounded-md px-3 py-1.5 transition-colors"
@@ -86,7 +86,7 @@ export default function MessageInput({
         </div>
         <button
           onClick={handleSend}
-          className="w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+          className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors"
           style={{ background: "linear-gradient(to right, #02ece9, #70ec00)" }}
         >
           <Send className="w-5 h-5" />
