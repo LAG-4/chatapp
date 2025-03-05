@@ -4,6 +4,8 @@ import { Upload, Send, FileText, X } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 import { Squares } from "@/components/ui/squares-background";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
+import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 
 interface StoredDocument {
   name: string;
@@ -16,6 +18,8 @@ interface Message {
 }
 
 export default function DocumentPage() {
+  const { user, isSignedIn } = useUser();
+  const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [summary, setSummary] = useState<string>("");
   const [question, setQuestion] = useState<string>("");
@@ -252,6 +256,90 @@ export default function DocumentPage() {
     borderColor: string;
     hoverFillColor: string;
   };
+
+  // If not signed in, show login prompt
+  if (!isSignedIn) {
+    return (
+      <div className="relative min-h-screen bg-[#060606] text-white">
+        {/* Navigation Bar */}
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-[#1a1a1a] border-b border-gray-800">
+          <div className="w-full px-4">
+            <div className="flex items-center justify-between h-16">
+              <h1 className="text-[#02ece9] font-semibold text-lg">Document Chat</h1>
+              <a 
+                href="/" 
+                className="flex items-center gap-2 text-white hover:text-[#02ece9] transition-colors"
+              >
+                <svg 
+                  className="w-5 h-5" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" 
+                  />
+                </svg>
+                <span>Back to MultiChat</span>
+              </a>
+            </div>
+          </div>
+        </nav>
+
+        {/* Background squares */}
+        <div className="absolute inset-0 z-0">
+          <Squares 
+            direction="diagonal"
+            speed={0.5}
+            squareSize={40}
+            borderColor="#333" 
+            hoverFillColor="#222"
+          />
+        </div>
+
+        {/* Login prompt */}
+        <div className="relative z-10 flex items-center justify-center min-h-screen px-4">
+          <div className="bg-[#1a1a1a]/90 backdrop-blur-sm rounded-lg p-8 max-w-md w-full text-center">
+            <FileText className="w-16 h-16 mx-auto mb-6 text-[#02ece9]" />
+            <h2 className="text-2xl font-bold mb-4">Sign in Required</h2>
+            <p className="text-gray-300 mb-6">
+              Document chat is an exclusive feature available only to signed-in users. Please sign in to:
+            </p>
+            <ul className="text-left text-gray-300 mb-8 space-y-2">
+              <li className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-[#02ece9]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Upload and analyze documents
+              </li>
+              <li className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-[#02ece9]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Get AI-powered insights
+              </li>
+              <li className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-[#02ece9]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Save your document history
+              </li>
+            </ul>
+            <button
+              onClick={() => router.push('/sign-in')}
+              className="w-full bg-gradient-to-r from-[#02ece9] to-[#70ec00] text-black font-semibold py-3 px-6 rounded-lg hover:opacity-90 transition-opacity"
+            >
+              Sign In
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen bg-[#060606] text-white">

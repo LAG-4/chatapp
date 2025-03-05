@@ -1,5 +1,6 @@
 // pages/chat.tsx
 import React, { useEffect, useState } from "react";
+import { useUser } from "@clerk/nextjs";
 import { useChatLogic } from "./useChatLogic";
 import UserSync from "../components/UserSync";
 import Sidebar from "../components/Sidebar";
@@ -8,6 +9,7 @@ import MessageInput from "../components/MessageInput";
 import { Menu, X } from "lucide-react";
 
 export default function Chatbot() {
+  const { isSignedIn } = useUser();
   const {
     sidebarOpen,
     chats,
@@ -17,6 +19,7 @@ export default function Chatbot() {
     selectedModel,
     models,
     isLoading,
+    guestPromptCount,
     setSelectedChatId,
     setIsDropdownOpen,
     toggleSidebar,
@@ -50,6 +53,25 @@ export default function Chatbot() {
           >
             <X className="w-5 h-5" />
           </button>
+        </div>
+      )}
+
+      {/* Show remaining prompts for guest users */}
+      {!isSignedIn && guestPromptCount < 5 && (
+        <div className="fixed bottom-20 right-4 z-50">
+          <div className="bg-gray-800 rounded-lg p-3 shadow-lg border border-gray-700">
+            <div className="flex items-center gap-2">
+              <span className="text-gray-300 text-sm">
+              Free Prompts Available – Log in to unlock more options: {5 - guestPromptCount}
+              </span>
+              <div className="w-24 h-2 bg-gray-700 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-[#02ece9] to-[#70ec00]" 
+                  style={{ width: `${((5 - guestPromptCount) / 5) * 100}%` }}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

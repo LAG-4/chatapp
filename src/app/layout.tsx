@@ -5,6 +5,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import UserSync from "@/components/UserSync";
 import { PostHogProvider } from "./providers";
 import 'highlight.js/styles/github-dark.css';
+import { Toaster } from 'react-hot-toast';
 
 const firaCode = Fira_Code({
   variable: "--font-fira-code",
@@ -40,6 +41,7 @@ export default function RootLayout({
             <UserSync />
             {children}
           </PostHogProvider>
+          <Toaster />
         </body>
       </html>
     </ClerkProvider>

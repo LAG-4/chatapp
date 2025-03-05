@@ -9,14 +9,14 @@
 - [x] Add authentication
 - [ ] Add your own API key
 - [x] Add markdown support in chatbot responses
-- [ ] Add chat limits
+- [x] Add chat limits
 - [x] Implement chat history for bot
 - [x] Implement chat history
 - [ ] Enable google AdSense
 - [x] Initialize api to wake up server
 - [x] Implement posthog
 - [ ] Add chat sidebar summaries
-- [ ] Maybe try adding a thinking prompt block
+- [x] Maybe try adding a thinking prompt block
 - [x] Quality of life features like auto scrolling and loading response
 - [x] Add RAG
 - [x] Add AI Agents
