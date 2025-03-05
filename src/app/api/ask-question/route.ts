@@ -14,66 +14,88 @@ const model = new ChatGroq({
 });
 
 // File path for storing vector data
-const VECTOR_STORE_PATH = path.join(os.tmpdir(), 'vector_store.json');
+const VECTOR_STORE_PATH = path.join(os.tmpdir(), 'document_vectors.json');
 
 export async function POST(req: Request) {
   try {
-    const { question } = await req.json();
+    const { question, fileName, maxTokens = 4000 } = await req.json();
 
-    // Check if vector store data exists
-    if (!fs.existsSync(VECTOR_STORE_PATH)) {
+    if (!question) {
       return NextResponse.json(
-        { error: 'No document has been processed yet' },
+        { error: "No question provided" },
         { status: 400 }
       );
     }
 
-    // Read vector store data
-    const { embeddings } = JSON.parse(fs.readFileSync(VECTOR_STORE_PATH, 'utf-8'));
-
-    // Initialize HuggingFace embeddings
-    const hfEmbeddings = new HuggingFaceInferenceEmbeddings({
-      apiKey: process.env.HUGGINGFACE_API_KEY,
-      model: "sentence-transformers/all-MiniLM-L6-v2"
-    });
-
-    // Create a new vector store with the stored embeddings
-    const vectorStore = new MemoryVectorStore(hfEmbeddings);
-    
-    // Add the stored documents and embeddings back to the vector store
-    for (const item of embeddings) {
-      await vectorStore.addVectors(
-        [item.embedding],
-        [{ pageContent: item.text, metadata: item.metadata }]
+    if (!fs.existsSync(VECTOR_STORE_PATH)) {
+      return NextResponse.json(
+        { error: "No document data found" },
+        { status: 404 }
       );
     }
 
-    // Search for relevant document chunks
-    const relevantDocs = await vectorStore.similaritySearch(question, 3);
+    // Read the stored vector data
+    const vectorData = JSON.parse(fs.readFileSync(VECTOR_STORE_PATH, 'utf-8'));
+    
+    if (vectorData.fileName !== fileName) {
+      return NextResponse.json(
+        { error: "Document not found, Please upload it again" },
+        { status: 404 }
+      );
+    }
 
-    // Construct the prompt with context
-    const context = relevantDocs.map(doc => doc.pageContent).join("\n\n");
-    const prompt = `Based on the following context, please answer the question. If the answer cannot be found in the context, say "I cannot find the answer in the document."
-
-Context:
-${context}
-
-Question: ${question}
-
-Answer:`;
-
-    // Generate answer using Groq
-    const response = await model.invoke(prompt);
-
-    return NextResponse.json({
-      success: true,
-      answer: response.content,
+    // Initialize embeddings and vector store
+    const embeddings = new HuggingFaceInferenceEmbeddings({
+      apiKey: process.env.HUGGINGFACE_API_KEY,
     });
 
+    // Create a new vector store with the stored documents
+    const vectorStore = await MemoryVectorStore.fromDocuments(
+      vectorData.docs.map((doc: any) => ({
+        pageContent: doc.pageContent,
+        metadata: doc.metadata,
+      })),
+      embeddings
+    );
+
+    // Perform similarity search
+    const similarDocs = await vectorStore.similaritySearch(question, 3);
+
+    // Combine relevant chunks while respecting token limit
+    let contextText = "";
+    for (const doc of similarDocs) {
+      if ((contextText + doc.pageContent).length * 1.5 < maxTokens) { // Rough estimate of tokens
+        contextText += doc.pageContent + "\n\n";
+      } else {
+        break;
+      }
+    }
+
+    // Initialize the chat model
+    const model = new ChatGroq({
+      apiKey: process.env.GROQ_API_KEY,
+      temperature: 0.3,
+      modelName: "llama-3.3-70b-versatile",
+    });
+
+    // Generate answer
+    const prompt = `Context: ${contextText}\n\nQuestion: ${question}\n\nPlease answer the question based on the context provided. If the answer cannot be found in the context, say so.`;
+    const response = await model.invoke(prompt);
+
+    return NextResponse.json({ answer: response.content });
+
   } catch (error: any) {
-    console.error('Error processing question:', error);
+    console.error("Error processing question:", error);
+    
+    if (error.message.includes("rate_limit_exceeded")) {
+      return NextResponse.json(
+        { error: "The document is too large to process. Please try a more specific question." },
+        { status: 413 }
+      );
+    }
+
     return NextResponse.json(
-      { error: error.message || 'Error processing question' },
+      { error: error.message || "Failed to process question" },
       { status: 500 }
     );
   }
