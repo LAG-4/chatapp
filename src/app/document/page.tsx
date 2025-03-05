@@ -9,11 +9,16 @@ interface StoredDocument {
   timestamp: number;
 }
 
+interface Message {
+  role: "user" | "assistant";
+  content: string;
+}
+
 export default function DocumentPage() {
   const [file, setFile] = useState<File | null>(null);
   const [summary, setSummary] = useState<string>("");
   const [question, setQuestion] = useState<string>("");
-  const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [previousDocs, setPreviousDocs] = useState<StoredDocument[]>([]);
@@ -216,7 +221,7 @@ export default function DocumentPage() {
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      askQuestion();
+      void askQuestion();
     }
   };
 
@@ -238,8 +243,46 @@ export default function DocumentPage() {
     };
   }, []);
 
+  // Add proper type for the Squares component props
+  type SquaresProps = {
+    direction: "diagonal";
+    speed: number;
+    squareSize: number;
+    borderColor: string;
+    hoverFillColor: string;
+  };
+
   return (
     <div className="relative min-h-screen bg-[#060606] text-white">
+      {/* Navigation Bar */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#1a1a1a] border-b border-gray-800">
+        <div className="w-full px-4">
+          <div className="flex items-center justify-between h-16">
+            <h1 className="text-[#02ece9] font-semibold text-lg">Document Chat</h1>
+            <a 
+              href="/" 
+              className="flex items-center gap-2 text-white hover:text-[#02ece9] transition-colors"
+            >
+              <svg 
+                className="w-5 h-5" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" 
+                />
+              </svg>
+              <span>Back to MultiChat</span>
+            </a>
+          </div>
+        </div>
+      </nav>
+
       {/* Background squares */}
       <div className="absolute inset-0 z-0">
         <Squares 
@@ -251,14 +294,12 @@ export default function DocumentPage() {
         />
       </div>
 
-      {/* Content */}
-      <div className="relative z-10 flex flex-col lg:flex-row h-screen">
+      {/* Content - Add padding-top to account for fixed navbar */}
+      <div className="relative z-10 flex flex-col lg:flex-row min-h-screen pt-16">
         {/* Sidebar - Only visible on desktop */}
         <div className="hidden lg:block w-64 bg-[#1a1a1a] border-r border-gray-800">
-          <div className="sticky top-0 flex items-center justify-between p-4 border-b border-gray-800 bg-[#1a1a1a]">
-            <h2 className="text-xl font-semibold text-[#02ece9]">Document History</h2>
-          </div>
-          <div className="overflow-y-auto h-[calc(100vh-64px)] bg-[#1a1a1a]">
+         
+          <div className="overflow-y-auto h-[calc(100vh-80px)] bg-[#1a1a1a]">
             <div className="p-4 space-y-2">
               {previousDocs.map((doc) => (
                 <div 
@@ -268,6 +309,13 @@ export default function DocumentPage() {
                       ? 'bg-[#02ece9]/10 border border-[#02ece9]/50' 
                       : 'hover:bg-gray-800/50 border border-transparent'}`}
                   onClick={() => selectDocument(doc.name)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      selectDocument(doc.name);
+                    }
+                  }}
                 >
                   <div className="flex items-center space-x-2 overflow-hidden">
                     <FileText className="w-4 h-4 flex-shrink-0 text-[#02ece9]" />
@@ -279,6 +327,7 @@ export default function DocumentPage() {
                       removeFromHistory(doc.name);
                     }}
                     className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-colors p-1"
+                    aria-label={`Remove ${doc.name} from history`}
                   >
                     <X className="w-4 h-4" />
                   </button>

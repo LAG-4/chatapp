@@ -46,12 +46,7 @@ export function useChatLogic() {
       id: "llama-3.2-90b-vision-preview",
       name: "LLAMA 3.2",
       backend: "Groq",
-    },
-    {
-      id: "anthropic/claude-3.7-sonnet",
-      name: "Claude 3.7",
-      backend: "claude-3.7-sonnet", // Must match the Flask code's `elif backend == "Claude":`
-    },
+    }
   ];
 
   // Fetch user chats if signed in
