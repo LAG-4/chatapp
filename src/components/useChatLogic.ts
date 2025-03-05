@@ -27,6 +27,7 @@ export function useChatLogic() {
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState<Model>({
     id: "llama-3.3-70b-versatile",
     name: "LLAMA 3.3",
@@ -74,24 +75,64 @@ export function useChatLogic() {
 
   // Handle sending a new message
   async function handleSendMessage(text: string) {
-    // 1. Guest logic
-    if (!isSignedIn || !user) {
+    if (isLoading) return; // Prevent double submissions
+    setIsLoading(true);
+
+    try {
+      // 1. Guest logic
+      if (!isSignedIn || !user) {
+        let chatId = selectedChatId;
+        if (!chatId) {
+          chatId = "guest-" + nanoid(6);
+          setSelectedChatId(chatId);
+          setChats((prev) => [
+            ...prev,
+            { id: chatId, title: "New Chat (Guest)", createdAt: new Date().toISOString() },
+          ]);
+        }
+    
+        // Add user's message to local state
+        setMessages((prev) => [
+          ...prev,
+          { id: Date.now(), text, sender: "user", timestamp: new Date() },
+        ]);
+    
+        // POST request to your Flask endpoint
+        const res = await fetch("https://qna-chatbot-0uel.onrender.com/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            session_id: chatId,
+            question: text,
+            backend: selectedModel.backend,
+            engine: selectedModel.id,
+          }),
+        });
+        const data = await res.json();
+    
+        // Add bot's response to local state
+        setMessages((prev) => [
+          ...prev,
+          { id: Date.now() + 1, text: data.response, sender: "bot", timestamp: new Date() },
+        ]);
+        return;
+      }
+    
+      // 2. Signed-in logic
       let chatId = selectedChatId;
       if (!chatId) {
-        chatId = "guest-" + nanoid(6);
+        chatId = await createChat(user.id);
         setSelectedChatId(chatId);
-        setChats((prev) => [
-          ...prev,
-          { id: chatId, title: "New Chat (Guest)", createdAt: new Date().toISOString() },
-        ]);
+        await refreshChats();
       }
-  
-      // Add user's message to local state
+    
+      // Store user's message in Firestore
+      await addMessageToChat(user.id, chatId, text, "user");
       setMessages((prev) => [
         ...prev,
         { id: Date.now(), text, sender: "user", timestamp: new Date() },
       ]);
-  
+    
       // POST request to your Flask endpoint
       const res = await fetch("https://qna-chatbot-0uel.onrender.com/chat", {
         method: "POST",
@@ -99,55 +140,32 @@ export function useChatLogic() {
         body: JSON.stringify({
           session_id: chatId,
           question: text,
-          backend: selectedModel.backend, // <-- Use the model's backend
-          engine: selectedModel.id,       // <-- Use the model's ID for the engine
+          backend: selectedModel.backend,
+          engine: selectedModel.id,
         }),
       });
       const data = await res.json();
-  
-      // Add bot's response to local state
+    
+      // Store bot's response in Firestore
+      await addMessageToChat(user.id, chatId, data.response, "bot");
       setMessages((prev) => [
         ...prev,
         { id: Date.now() + 1, text: data.response, sender: "bot", timestamp: new Date() },
       ]);
-      return;
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setMessages((prev) => [
+        ...prev,
+        { 
+          id: Date.now() + 1, 
+          text: "Sorry, I encountered an error. Please try again.", 
+          sender: "bot", 
+          timestamp: new Date() 
+        },
+      ]);
+    } finally {
+      setIsLoading(false);
     }
-  
-    // 2. Signed-in logic
-    let chatId = selectedChatId;
-    if (!chatId) {
-      chatId = await createChat(user.id);
-      setSelectedChatId(chatId);
-      await refreshChats();
-    }
-  
-    // Store user's message in Firestore
-    await addMessageToChat(user.id, chatId, text, "user");
-    setMessages((prev) => [
-      ...prev,
-      { id: Date.now(), text, sender: "user", timestamp: new Date() },
-    ]);
-  
-    // POST request to your Flask endpoint
-    const res = await fetch("https://qna-chatbot-0uel.onrender.com/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        session_id: chatId,
-        question: text,
-        backend: selectedModel.backend, // <-- Use the model's backend
-        engine: selectedModel.id,       // <-- Use the model's ID for the engine
-        // If using OpenAI, also include: api_key: "YOUR_OPENAI_KEY"
-      }),
-    });
-    const data = await res.json();
-  
-    // Store bot's response in Firestore
-    await addMessageToChat(user.id, chatId, data.response, "bot");
-    setMessages((prev) => [
-      ...prev,
-      { id: Date.now() + 1, text: data.response, sender: "bot", timestamp: new Date() },
-    ]);
   }
   
   // Handle deleting a chat
@@ -190,6 +208,7 @@ export function useChatLogic() {
     isDropdownOpen,
     selectedModel,
     models,
+    isLoading,
 
     // Setters
     setSelectedChatId,

@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Upload, Send, FileText, X } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 import { Squares } from "@/components/ui/squares-background";
+import { useAutoScroll } from "@/hooks/useAutoScroll";
 
 interface StoredDocument {
   name: string;
@@ -23,7 +24,7 @@ export default function DocumentPage() {
   const [error, setError] = useState<string>("");
   const [previousDocs, setPreviousDocs] = useState<StoredDocument[]>([]);
   const [selectedDoc, setSelectedDoc] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { messagesEndRef, chatContainerRef } = useAutoScroll(messages);
 
   useEffect(() => {
     // Load previous documents from local storage

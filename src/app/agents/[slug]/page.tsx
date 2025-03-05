@@ -1,39 +1,40 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, Send, Brain, Youtube, Globe as GlobeIcon, DollarSign, BarChart3, Code, ExternalLink } from 'lucide-react';
+import { MessageSquare, Send, Brain, Youtube, Globe as GlobeIcon, DollarSign, BarChart3, Code, ExternalLink, Newspaper, FileUser, Plane } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useAutoScroll } from '@/hooks/useAutoScroll';
 
 const agents = {
   "news-summarizer": {
     name: "News Summarizer Agent",
     description: "Takes a news URL or a keyword from the user and returns a summary of the news article or keyword",
     placeholder: "Enter a news URL or keyword...",
-    icon: <DollarSign className="w-12 h-12 text-yellow-400" />
+    icon: <Newspaper className="w-12 h-12 text-yellow-400" />
   },
   "video-script-generator": {
-    name: "Video Script Generator",
-    description: "Create engaging video scripts instantly",
-    placeholder: "Describe your video concept...",
+    name: "Youtube Agent",
+    description: "This agent analyzes YouTube videos and provides detailed summaries, timestamps, and key points.",
+    placeholder: "Enter a YouTube video URL...",
     icon: <Youtube className="w-12 h-12 text-red-500" />
   },
-  "disc-profile": {
-    name: "Executive DISC Profile",
-    description: "Generate professional DISC personality profiles",
-    placeholder: "Describe the person's behavior and characteristics...",
+  "research-agent": {
+    name: "Research Agent",
+    description: "This agent conducts comprehensive research on a given topic and provides a detailed report.",
+    placeholder: "Enter your research topic...",
     icon: <Brain className="w-12 h-12 text-blue-400" />
   },
   "web-design-grader": {
-    name: "Web Design Grader",
+    name: "Resume & Cover Letter Enhancer",
     description: "Analyze and grade website designs",
-    placeholder: "Enter a website URL...",
-    icon: <GlobeIcon className="w-12 h-12 text-green-400" />
+    placeholder: "Upload your resume or cover letter...",
+    icon: <FileUser className="w-12 h-12 text-green-400" />
   },
   "analytics-interpreter": {
-    name: "Analytics Interpreter",
-    description: "Interpret complex analytics data",
-    placeholder: "Paste your analytics data or describe what you want to analyze...",
-    icon: <BarChart3 className="w-12 h-12 text-purple-400" />
+    name: "Travel Itinerary Planner",
+    description: "Provide a destination, travel dates, and user preferences and get a detailed travel itinerary",
+    placeholder: "Enter your travel details...",
+    icon: <Plane className="w-12 h-12 text-purple-400" />
   },
   "code-assistant": {
     name: "Code Assistant Pro",
@@ -60,19 +61,7 @@ export default function AgentPage({ params }: { params: Promise<{ slug: string }
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  
-  // Add refs for scrolling
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const chatContainerRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  const { messagesEndRef, chatContainerRef } = useAutoScroll(messages);
 
   // Handle textarea height and scroll adjustment
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -198,7 +187,7 @@ export default function AgentPage({ params }: { params: Promise<{ slug: string }
 
             {/* Chat Messages */}
             <div className="bg-[#1a1a1a]/90 backdrop-blur-sm rounded-lg p-6 border border-gray-800 mb-20">
-              <div className="space-y-6">
+              <div ref={chatContainerRef} className="space-y-6">
                 {messages.map((message, index) => (
                   <div key={index} className={`flex flex-col ${message.role === 'user' ? 'items-end' : 'items-start'}`}>
                     <div

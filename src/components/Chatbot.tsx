@@ -16,6 +16,7 @@ export default function Chatbot() {
     isDropdownOpen,
     selectedModel,
     models,
+    isLoading,
     setSelectedChatId,
     setIsDropdownOpen,
     toggleSidebar,
@@ -81,7 +82,7 @@ export default function Chatbot() {
       <div className="md:pl-64 flex-1 flex flex-col">
         {/* Scrollable chat messages */}
         <div className="flex-1 overflow-y-auto">
-          <ChatWindow messages={messages} />
+          <ChatWindow messages={messages} isLoading={isLoading} />
         </div>
         <MessageInput
           onSend={handleSendMessage}
@@ -90,6 +91,7 @@ export default function Chatbot() {
           isDropdownOpen={isDropdownOpen}
           setIsDropdownOpen={setIsDropdownOpen}
           onSelectModel={onSelectModel}
+          isLoading={isLoading}
         />
       </div>
     </div>
