@@ -97,7 +97,7 @@ export function useChatLogic() {
     { id: "gemma2-9b-it", name: "GOOGLE GEMMA 2", backend: "Groq" },
     {
       id: "deepseek-r1-distill-llama-70b",
-      name: "DEEPSEEK R1(REASONING)",
+      name: "DEEPSEEK R1",
       backend: "Groq",
     },
     {

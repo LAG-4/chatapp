@@ -74,7 +74,11 @@ export function Globe({
 
   const onResize = () => {
     if (canvasRef.current) {
-      width = canvasRef.current.offsetWidth
+      // Get the current viewport width
+      const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
+      // Set a smaller size for mobile
+      const baseSize = vw < 768 ? 300 : 600
+      width = Math.min(canvasRef.current.offsetWidth, baseSize)
     }
   }
 
@@ -90,13 +94,16 @@ export function Globe({
     })
 
     setTimeout(() => (canvasRef.current!.style.opacity = "1"))
-    return () => globe.destroy()
+    return () => {
+      window.removeEventListener("resize", onResize)
+      globe.destroy()
+    }
   }, [])
 
   return (
     <div
       className={cn(
-        "absolute inset-0 mx-auto aspect-[1/1] w-full max-w-[600px]",
+        "absolute inset-0 mx-auto aspect-[1/1] w-full max-w-[300px] md:max-w-[600px]",
         className,
       )}
     >

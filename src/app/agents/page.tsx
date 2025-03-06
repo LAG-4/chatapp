@@ -81,39 +81,39 @@ export default function AgentsPage() {
         {/* Hero Section with Title and Globe */}
         <div className="flex flex-col items-center justify-center">
           {/* Title Section */}
-          <div className="text-center mb-16 px-4">
-            <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-[#02ece9] to-[#70ec00] text-transparent bg-clip-text leading-normal py-2">
+          <div className="text-center mb-8 md:mb-16 px-4">
+            <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-[#02ece9] to-[#70ec00] text-transparent bg-clip-text leading-normal py-2">
               AI Agents
             </h1>
-            <p className="text-2xl text-gray-400 max-w-xl">
+            <p className="text-lg md:text-2xl text-gray-400 max-w-xl">
               Discover powerful AI agents to help you with your tasks
             </p>
           </div>
 
           {/* Globe Section */}
-          <div className="relative h-[500px] w-full mb-20">
+          <div className="relative h-[300px] md:h-[500px] w-full mb-12 md:mb-20">
             <Globe />
-            <div className="absolute inset-0 from-transparent via-transparent to-[#060606]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#060606]" />
           </div>
         </div>
 
         {/* Agent Cards */}
         <div className="px-4 max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 justify-center">
             {agents.map((agent) => (
               <div
                 key={agent.id}
-                className="bg-[#1a1a1a]/90 backdrop-blur-sm rounded-lg p-6 border border-gray-800 hover:border-[#02ece9]/50 transition-colors"
+                className="bg-[#1a1a1a]/90 backdrop-blur-sm rounded-lg p-4 md:p-6 border border-gray-800 hover:border-[#02ece9]/50 transition-colors"
               >
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-16 h-16 rounded-full bg-[#1a1a1a] border-2 border-gray-800 flex items-center justify-center mb-4">
+                  <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-[#1a1a1a] border-2 border-gray-800 flex items-center justify-center mb-4">
                     {agent.icon}
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">{agent.name}</h3>
-                  <p className="text-sm text-gray-400 mb-4">{agent.description}</p>
+                  <h3 className="text-base md:text-lg font-semibold mb-2">{agent.name}</h3>
+                  <p className="text-xs md:text-sm text-gray-400 mb-4">{agent.description}</p>
                   <button 
                     onClick={() => handleAgentClick(agent.slug)}
-                    className="mt-4 w-full bg-gradient-to-r from-[#02ece9] to-[#70ec00] text-black font-semibold px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"
+                    className="mt-2 md:mt-4 w-full bg-gradient-to-r from-[#02ece9] to-[#70ec00] text-black font-semibold px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"
                   >
                     Go
                   </button>
