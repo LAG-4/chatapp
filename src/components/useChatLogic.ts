@@ -74,8 +74,11 @@ export function useChatLogic() {
   // Clerk auth
   const { user, isSignedIn } = useUser();
 
+  // Check if on mobile device
+  const isMobile = typeof window !== 'undefined' && /Mobi|Android/i.test(navigator.userAgent);
+
   // Sidebar & Chat states
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile); // Close by default on mobile
   const [chats, setChats] = useState<any[]>([]);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [messages, setMessages] = useState<any[]>([]);

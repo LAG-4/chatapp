@@ -56,25 +56,6 @@ export default function Chatbot() {
         </div>
       )}
 
-      {/* Show remaining prompts for guest users */}
-      {!isSignedIn && guestPromptCount < 5 && (
-        <div className="fixed bottom-20 right-4 z-50">
-          <div className="bg-gray-800 rounded-lg p-3 shadow-lg border border-gray-700">
-            <div className="flex items-center gap-2">
-              <span className="text-gray-300 text-sm">
-              Free Prompts Available – Log in to unlock more options: {5 - guestPromptCount}
-              </span>
-              <div className="w-24 h-2 bg-gray-700 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-[#02ece9] to-[#70ec00]" 
-                  style={{ width: `${((5 - guestPromptCount) / 5) * 100}%` }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Sync user data to Firestore */}
       <UserSync />
 
@@ -106,6 +87,21 @@ export default function Chatbot() {
         <div className="flex-1 overflow-y-auto">
           <ChatWindow messages={messages} isLoading={isLoading} />
         </div>
+        
+        {/* Free prompts message above chat input */}
+        {!isSignedIn && guestPromptCount < 5 && (
+          <div className="px-4 py-2 bg-[#1a1a1a] border-t border-gray-800">
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-yellow-500 text-sm">
+                You only have {5 - guestPromptCount} messages left.
+              </span>
+              <a href="/sign-in" className="text-[#70ec00] hover:underline text-sm">
+                Sign in to reset your limits
+              </a>
+            </div>
+          </div>
+        )}
+        
         <MessageInput
           onSend={handleSendMessage}
           models={models}
