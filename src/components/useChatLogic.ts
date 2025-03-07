@@ -86,13 +86,14 @@ export function useChatLogic() {
   const [isLoading, setIsLoading] = useState(false);
   const [guestPromptCount, setGuestPromptCount] = useState<number>(0);
   const [selectedModel, setSelectedModel] = useState<Model>({
-    id: "llama-3.3-70b-versatile",
-    name: "LLAMA 3.3",
-    backend: "Groq",
+    id: "gemini-2.0-flash",
+    name: "GEMINI 2.0 FLASH",
+    backend: "Google",
   });
 
   // Model options
   const models: Model[] = [
+    { id: "gemini-2.0-flash", name: "GEMINI 2.0 FLASH", backend: "Google" },
     { id: "llama-3.3-70b-versatile", name: "LLAMA 3.3", backend: "Groq" },
     { id: "gemma2-9b-it", name: "GOOGLE GEMMA 2", backend: "Groq" },
     {
@@ -190,36 +191,41 @@ export function useChatLogic() {
     setIsLoading(true);
 
     try {
-      // 1. Guest logic
-      if (!isSignedIn || !user) {
-        // Check if limit was previously reached
-        const limitReached = localStorage.getItem('guestLimitReached') === 'true';
-        if (limitReached) {
-          toast.error("Chat limit reached. Please sign in to continue.", {
-            duration: 3000,
-            position: "top-center",
-          });
-          router.push('/sign-in');
-          return;
-        }
+      // Add user's message to local state
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now(), text, sender: "user", timestamp: new Date() },
+      ]);
 
-        let chatId = selectedChatId;
-        if (!chatId) {
-          chatId = "guest-" + nanoid(6);
-          setSelectedChatId(chatId);
-          setChats((prev) => [
-            ...prev,
-            { id: chatId, title: "New Chat (Guest)", createdAt: new Date().toISOString() },
-          ]);
+      let response;
+
+      // Handle Gemini 2.0 Flash requests
+      if (selectedModel.backend === "Google") {
+        try {
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.id}:generateContent?key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              contents: [{
+                parts: [{ text }]
+              }]
+            }),
+          });
+
+          if (!res.ok) {
+            throw new Error('Failed to get response from Gemini');
+          }
+
+          const data = await res.json();
+          response = data.candidates[0].content.parts[0].text;
+        } catch (error) {
+          console.error('Gemini API error:', error);
+          throw error;
         }
-    
-        // Add user's message to local state
-        setMessages((prev) => [
-          ...prev,
-          { id: Date.now(), text, sender: "user", timestamp: new Date() },
-        ]);
-    
-        // POST request to your Flask endpoint with API key rotation
+      } else {
+        // Existing Groq API logic
         const makeRequest = async (retryCount = 0) => {
           try {
             const currentApiKey = API_KEYS[currentApiKeyIndex];
@@ -230,7 +236,7 @@ export function useChatLogic() {
                 "Authorization": `Bearer ${currentApiKey}`
               },
               body: JSON.stringify({
-                session_id: chatId,
+                session_id: selectedChatId,
                 question: text,
                 backend: selectedModel.backend,
                 engine: selectedModel.id,
@@ -265,90 +271,24 @@ export function useChatLogic() {
             throw error;
           }
         };
-
         const data = await makeRequest();
-    
-        // Add bot's response to local state
-        setMessages((prev) => [
-          ...prev,
-          { id: Date.now() + 1, text: data.response, sender: "bot", timestamp: new Date() },
-        ]);
+        response = data.response;
+      }
 
-        // Increment guest prompt count
+      // Add bot's response to messages
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now() + 1, text: response, sender: "bot", timestamp: new Date() },
+      ]);
+
+      // Increment guest prompt count if user is not signed in
+      if (!isSignedIn) {
         setGuestPromptCount(prev => prev + 1);
-        return;
       }
-    
-      // 2. Signed-in logic
-      let chatId = selectedChatId;
-      if (!chatId) {
-        chatId = await createChat(user.id);
-        setSelectedChatId(chatId);
-        await refreshChats();
-      }
-    
-      // Store user's message in Firestore
-      await addMessageToChat(user.id, chatId, text, "user");
-      setMessages((prev) => [
-        ...prev,
-        { id: Date.now(), text, sender: "user", timestamp: new Date() },
-      ]);
-    
-      // POST request with API key rotation for signed-in users
-      const makeRequest = async (retryCount = 0) => {
-        try {
-          const currentApiKey = API_KEYS[currentApiKeyIndex];
-          const res = await fetch("https://qna-chatbot-0uel.onrender.com/chat", {
-            method: "POST",
-            headers: { 
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${currentApiKey}`
-            },
-            body: JSON.stringify({
-              session_id: chatId,
-              question: text,
-              backend: selectedModel.backend,
-              engine: selectedModel.id,
-            }),
-          });
 
-          if (!res.ok) {
-            if (res.status === 429 || res.status === 401 || res.status === 403) {
-              const newApiKey = handleApiFailure();
-              if (retryCount < 1 && newApiKey !== currentApiKey) {
-                return makeRequest(retryCount + 1);
-              }
-              throw new Error('All API keys are currently rate limited. Please try again later.');
-            }
-            throw new Error('Failed to get response');
-          }
-
-          // Reset failure count on success
-          apiKeyFailureCount[currentApiKeyIndex] = 0;
-          return await res.json();
-        } catch (error) {
-          if (retryCount < 1) {
-            const newApiKey = handleApiFailure();
-            if (newApiKey !== API_KEYS[currentApiKeyIndex]) {
-              return makeRequest(retryCount + 1);
-            }
-          }
-          throw error;
-        }
-      };
-
-      const data = await makeRequest();
-    
-      // Store bot's response in Firestore
-      await addMessageToChat(user.id, chatId, data.response, "bot");
-      setMessages((prev) => [
-        ...prev,
-        { id: Date.now() + 1, text: data.response, sender: "bot", timestamp: new Date() },
-      ]);
     } catch (error: any) {
       console.error('Error sending message:', error);
       
-      // Show appropriate error message to user
       const errorMessage = error.message === 'All API keys are currently rate limited. Please try again later.'
         ? "We're experiencing high demand. Please try again in a few minutes."
         : "Sorry, I encountered an error. Please try again.";
