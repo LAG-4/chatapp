@@ -9,7 +9,7 @@ import {
   addMessageToChat,
   fetchMessagesForChat,
   deleteChatWithMessages,
-} from "../lib/chatService";
+} from "../lib/encryptedChatService";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 
@@ -191,26 +191,83 @@ export function useChatLogic() {
     setIsLoading(true);
 
     try {
-      // Add user's message to local state
-      setMessages((prev) => [
-        ...prev,
-        { id: Date.now(), text, sender: "user", timestamp: new Date() },
-      ]);
+      // Create a new chat if there isn't one selected
+      let chatId = selectedChatId;
+      let isNewChat = false;
+
+      if (!chatId && isSignedIn && user) {
+        isNewChat = true;
+        chatId = await createChat(user.id);
+        const newChat = {
+          id: chatId,
+          title: "New Chat",
+          createdAt: new Date(),
+        };
+        setChats(prev => [newChat, ...prev]);
+        setSelectedChatId(chatId);
+        // Wait for the state to update
+        await new Promise(resolve => setTimeout(resolve, 0));
+      } else if (!chatId) {
+        isNewChat = true;
+        chatId = nanoid(10);
+        const newChat = {
+          id: chatId,
+          title: "New Chat",
+          createdAt: new Date(),
+        };
+        setChats(prev => [newChat, ...prev]);
+        setSelectedChatId(chatId);
+        // Wait for the state to update
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
+
+      // Create the new message object
+      const userMessage = { 
+        id: Date.now(), 
+        text, 
+        sender: "user", 
+        timestamp: new Date() 
+      };
+
+      // If this is a new chat, set messages directly instead of appending
+      if (isNewChat) {
+        setMessages([userMessage]);
+      } else {
+        setMessages(prev => [...prev, userMessage]);
+      }
+
+      // If user is signed in, save the message to Firestore
+      if (isSignedIn && user && chatId) {
+        await addMessageToChat(user.id, chatId, text, "user");
+      }
 
       let response;
 
       // Handle Gemini 2.0 Flash requests
       if (selectedModel.backend === "Google") {
         try {
+          // Format previous messages for context including the new message
+          const messageHistory = isNewChat 
+            ? [userMessage].map(msg => ({
+                role: msg.sender === "user" ? "user" : "model",
+                parts: [{ text: msg.text }]
+              }))
+            : [...messages, userMessage].map(msg => ({
+                role: msg.sender === "user" ? "user" : "model",
+                parts: [{ text: msg.text }]
+              }));
+
           const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${selectedModel.id}:generateContent?key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              contents: [{
-                parts: [{ text }]
-              }]
+              contents: messageHistory,
+              generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 1000,
+              },
             }),
           });
 
@@ -225,61 +282,69 @@ export function useChatLogic() {
           throw error;
         }
       } else {
-        // Existing Groq API logic
-        const makeRequest = async (retryCount = 0) => {
-          try {
-            const currentApiKey = API_KEYS[currentApiKeyIndex];
-            const res = await fetch("https://qna-chatbot-0uel.onrender.com/chat", {
-              method: "POST",
-              headers: { 
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${currentApiKey}`
-              },
-              body: JSON.stringify({
-                session_id: selectedChatId,
-                question: text,
-                backend: selectedModel.backend,
-                engine: selectedModel.id,
-              }),
+        // Handle Groq requests
+        try {
+          console.log('Using Groq API Key:', process.env.NEXT_PUBLIC_GROQ_API_KEY?.substring(0, 10) + '...');
+          
+          // Format previous messages for context including the new message
+          const messageHistory = isNewChat 
+            ? [{ role: "user", content: text }]
+            : [...messages.map(msg => ({
+                role: msg.sender === "user" ? "user" : "assistant",
+                content: msg.text
+              })), { role: "user", content: text }];
+
+          const res = await fetch(`https://api.groq.com/openai/v1/chat/completions`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${process.env.NEXT_PUBLIC_GROQ_API_KEY}`,
+            },
+            body: JSON.stringify({
+              model: selectedModel.id,
+              messages: messageHistory,
+              temperature: 0.7,
+              max_tokens: 1000,
+            }),
+          });
+
+          if (!res.ok) {
+            const errorData = await res.json().catch(() => null);
+            console.error('Groq API response error:', {
+              status: res.status,
+              statusText: res.statusText,
+              errorData
             });
-
-            if (!res.ok) {
-              // Check for rate limit or API key specific errors
-              if (res.status === 429 || res.status === 401 || res.status === 403) {
-                const newApiKey = handleApiFailure();
-                
-                // If we have a new API key and haven't retried too many times, retry the request
-                if (retryCount < 1 && newApiKey !== currentApiKey) {
-                  return makeRequest(retryCount + 1);
-                }
-                
-                throw new Error('All API keys are currently rate limited. Please try again later.');
-              }
-              throw new Error('Failed to get response');
-            }
-
-            // Reset failure count on success
-            apiKeyFailureCount[currentApiKeyIndex] = 0;
-            return await res.json();
-          } catch (error) {
-            if (retryCount < 1) {
-              const newApiKey = handleApiFailure();
-              if (newApiKey !== API_KEYS[currentApiKeyIndex]) {
-                return makeRequest(retryCount + 1);
-              }
-            }
-            throw error;
+            throw new Error(`Failed to get response from Groq: ${res.status} ${res.statusText}`);
           }
-        };
-        const data = await makeRequest();
-        response = data.response;
+
+          const data = await res.json();
+          if (!data || !data.choices || !data.choices[0]) {
+            console.error('Invalid Groq API response:', data);
+            throw new Error('Invalid response format from Groq');
+          }
+          response = data.choices[0].message.content;
+        } catch (error) {
+          console.error('Groq API error:', error);
+          throw error;
+        }
       }
 
       // Add bot's response to messages
-      setMessages((prev) => [
-        ...prev,
-        { id: Date.now() + 1, text: response, sender: "bot", timestamp: new Date() },
-      ]);
+      const botMessage = { 
+        id: Date.now() + 1, 
+        text: response, 
+        sender: "bot", 
+        timestamp: new Date() 
+      };
+      setMessages(prev => [...prev, botMessage]);
+
+      // If user is signed in, save the bot's response to Firestore
+      if (isSignedIn && user && chatId) {
+        await addMessageToChat(user.id, chatId, response, "bot");
+        // Refresh the chat list to update the title
+        await refreshChats();
+      }
 
       // Increment guest prompt count if user is not signed in
       if (!isSignedIn) {
@@ -343,6 +408,29 @@ export function useChatLogic() {
     setIsDropdownOpen(false);
   }
 
+  // Handle creating a new chat
+  async function handleNewChat() {
+    // Clear current messages
+    setMessages([]);
+    
+    if (isSignedIn && user) {
+      // Create new chat in Firestore
+      const chatId = await createChat(user.id);
+      setSelectedChatId(chatId);
+      await refreshChats();
+    } else {
+      // For guest users, create a local chat
+      const chatId = nanoid(10);
+      const newChat = {
+        id: chatId,
+        title: "New Chat",
+        createdAt: new Date(),
+      };
+      setChats(prev => [newChat, ...prev]);
+      setSelectedChatId(chatId);
+    }
+  }
+
   return {
     // State
     sidebarOpen,
@@ -364,5 +452,6 @@ export function useChatLogic() {
     onSelectModel,
     handleSendMessage,
     handleDeleteChat,
+    handleNewChat,
   };
 }

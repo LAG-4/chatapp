@@ -11,7 +11,7 @@ import * as os from 'os';
 
 // Initialize the Groq model
 const model = new ChatGroq({
-  apiKey: process.env.GROQ_API_KEY!,
+  apiKey: process.env.NEXT_PUBLIC_GROQ_API_KEY!,
   modelName: "llama-3.3-70b-versatile", // Using Mixtral for better performance
   temperature: 0.5,
 });
@@ -78,7 +78,7 @@ export async function POST(req: Request) {
 
       // Generate a summary using the first chunk to avoid token limits
       const model = new ChatGroq({
-        apiKey: process.env.GROQ_API_KEY,
+        apiKey: process.env.NEXT_PUBLIC_GROQ_API_KEY,
         temperature: 0.3,
         modelName: "llama-3.3-70b-versatile",
       });

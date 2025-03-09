@@ -15,8 +15,11 @@
 - [ ] Enable google AdSense
 - [x] Initialize api to wake up server
 - [x] Implement posthog
-- [ ] Add chat sidebar summaries
+- [x] Add chat sidebar summaries
 - [x] Maybe try adding a thinking prompt block
 - [x] Quality of life features like auto scrolling and loading response
 - [x] Add RAG
 - [x] Add AI Agents
+- [ ] Add streaming of text
+- [ ] Change answer bubbles
+- [ ] Add copy response button and ask again button for answer

@@ -26,6 +26,7 @@ export default function Chatbot() {
     onSelectModel,
     handleSendMessage,
     handleDeleteChat,
+    handleNewChat,
   } = useChatLogic();
 
   // State for showing/hiding the mobile warning banner
@@ -40,7 +41,9 @@ export default function Chatbot() {
   }, []);
 
   return (
-    <div className="relative w-full min-h-screen bg-[#1a1a1a] text-white flex flex-col">
+    <div className={`relative w-full min-h-screen bg-[#1a1a1a] text-white flex flex-col ${
+      sidebarOpen ? 'overflow-hidden h-screen' : ''
+    }`}>
       {/* If user is on mobile, show a dismissible banner */}
       {showMobileWarning && (
         <div className="flex items-center justify-between bg-orange-600 text-white px-4 py-2 z-50">
@@ -59,6 +62,14 @@ export default function Chatbot() {
       {/* Sync user data to Firestore */}
       <UserSync />
 
+      {/* Overlay when sidebar is open on mobile */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={toggleSidebar}
+        />
+      )}
+
       {/* Sidebar overlaid on the left (fixed) */}
       <Sidebar
         chats={chats}
@@ -67,6 +78,7 @@ export default function Chatbot() {
         onDeleteChat={handleDeleteChat}
         sidebarOpen={sidebarOpen}
         toggleSidebar={toggleSidebar}
+        onNewChat={handleNewChat}
       />
 
       {/* Mobile-only hamburger button when sidebar is closed.
@@ -82,7 +94,10 @@ export default function Chatbot() {
       )}
 
       {/* Main content area */}
-      <div className="md:pl-64 flex-1 flex flex-col">
+      <div className={`flex-1 md:ml-64 flex flex-col ${
+        // Only apply margin on desktop (md and up)
+        sidebarOpen ? "md:ml-64" : ""
+      }`}>
         {/* Scrollable chat messages */}
         <div className="flex-1 overflow-y-auto">
           <ChatWindow messages={messages} isLoading={isLoading} />

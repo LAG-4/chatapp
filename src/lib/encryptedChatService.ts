@@ -1,4 +1,3 @@
-// lib/chatService.ts
 import { nanoid } from "nanoid";
 import {
   getFirestore,
@@ -16,6 +15,7 @@ import {
   limit,
 } from "firebase/firestore";
 import app from "./firebaseClient";
+import { encryptMessage, decryptMessage, generateUserKey } from "../utils/encryption";
 
 const db = getFirestore(app);
 
@@ -83,14 +83,22 @@ export async function addMessageToChat(
   const snapshot = await getDocs(q);
   const isFirstMessage = snapshot.empty;
 
-  // Add the message
+  // Generate encryption key for the user
+  const userKey = generateUserKey(userId);
+
+  // Encrypt the message text
+  const encryptedText = encryptMessage(text, userKey);
+
+  // Add the encrypted message
   await addDoc(messagesRef, {
-    text: text ?? "",  // Use an empty string if text is undefined
+    text: encryptedText,
     sender,
     timestamp: serverTimestamp(),
+    isEncrypted: true // Flag to indicate the message is encrypted
   });
 
   // If this is the first user message, update the chat title
+  // Note: We store the title in plain text for searchability
   if (isFirstMessage && sender === "user") {
     const chatRef = doc(db, `users/${userId}/chats/${chatId}`);
     const title = generateChatTitle(text);
@@ -102,8 +110,21 @@ export async function fetchMessagesForChat(userId: string, chatId: string) {
   const messagesRef = collection(db, `users/${userId}/chats/${chatId}/messages`);
   const q = query(messagesRef, orderBy("timestamp", "asc"));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
-}
+  
+  // Generate encryption key for the user
+  const userKey = generateUserKey(userId);
+
+  return snapshot.docs.map((doc) => {
+    const data = doc.data();
+    // Decrypt the message if it's encrypted
+    const text = data.isEncrypted 
+      ? decryptMessage(data.text, userKey)
+      : data.text;
+
+    return {
+      id: doc.id,
+      ...data,
+      text // Replace encrypted text with decrypted text
+    };
+  });
+} 

@@ -32,18 +32,19 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <ClerkProvider>
-      <html lang="en">
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} ${firaCode.variable} font-sans`}
-        >
+    <html
+      lang="en"
+      className={`${firaCode.variable} ${geistSans.variable} ${geistMono.variable}`}
+    >
+      <body>
+        <ClerkProvider>
           <PostHogProvider>
             <UserSync />
             {children}
+            <Toaster position="top-center" />
           </PostHogProvider>
-          <Toaster />
-        </body>
-      </html>
-    </ClerkProvider>
+        </ClerkProvider>
+      </body>
+    </html>
   );
 }

@@ -93,7 +93,7 @@ export default function AgentsPage() {
           {/* Globe Section */}
           <div className="relative h-[300px] md:h-[500px] w-full mb-12 md:mb-20">
             <Globe />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#060606]" />
+            <div className="absolute inset-0 from-transparent via-transparent to-[#060606]" />
           </div>
         </div>
 
