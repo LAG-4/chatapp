@@ -21,5 +21,6 @@
 - [x] Add RAG
 - [x] Add AI Agents
 - [ ] Add streaming of text
-- [ ] Change answer bubbles
-- [ ] Add copy response button and ask again button for answer
+- [ ] Complete agents
+- [x] Change answer bubbles
+- [x] Add copy response button and ask again button for answer
