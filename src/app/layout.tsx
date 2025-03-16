@@ -40,7 +40,9 @@ export default function RootLayout({
         <ClerkProvider>
           <PostHogProvider>
             <UserSync />
-            {children}
+            <main className="pt-14">
+              {children}
+            </main>
             <Toaster position="top-center" />
           </PostHogProvider>
         </ClerkProvider>

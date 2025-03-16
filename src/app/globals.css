@@ -40,11 +40,44 @@ body {
 /* 
   Responsive rule for smaller screens:
   Adjust font size and padding below 640px 
-  (Tailwind’s default "sm" breakpoint).
+  (Tailwind's default "sm" breakpoint).
 */
 @media (max-width: 640px) {
   body {
     font-size: 14px;    /* e.g. 14px on mobile */
     padding: 1rem;      /* add extra padding if desired */
   }
+}
+
+/* Custom highlight color for chat */
+pre code .hljs-keyword,
+pre code .hljs-selector-tag,
+pre code .hljs-subst,
+pre code .hljs-title,
+pre code .hljs-section,
+pre code .hljs-tag,
+pre code .hljs-name,
+pre code .hljs-attribute,
+pre code .hljs-literal,
+pre code .hljs-template-tag,
+pre code .hljs-template-variable,
+pre code .hljs-type,
+pre code .hljs-variable,
+pre code .hljs-addition {
+  color: #34302a !important;
+}
+
+/* This will override any highlighted text in the chat */
+.text-gray-200 code,
+.text-gray-300 code,
+.text-gray-400 code {
+  background-color: #34302a !important;
+  color: #fff !important;
+}
+
+/* Also override inline code styling */
+code {
+  background-color: #34302a !important;
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.25rem;
 }

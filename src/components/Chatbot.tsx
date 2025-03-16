@@ -6,7 +6,8 @@ import UserSync from "../components/UserSync";
 import Sidebar from "../components/Sidebar";
 import ChatWindow from "../components/ChatWindow";
 import MessageInput from "../components/MessageInput";
-import { Menu, X } from "lucide-react";
+import Navbar from "../components/Navbar";
+import { X } from "lucide-react";
 
 export default function Chatbot() {
   const { isSignedIn } = useUser();
@@ -44,9 +45,12 @@ export default function Chatbot() {
     <div className={`relative w-full min-h-screen bg-[#1a1a1a] text-white flex flex-col ${
       sidebarOpen ? 'overflow-hidden h-screen' : ''
     }`}>
+      {/* Navbar - Add the new Navbar component */}
+      <Navbar toggleSidebar={toggleSidebar} />
+
       {/* If user is on mobile, show a dismissible banner */}
       {showMobileWarning && (
-        <div className="flex items-center justify-between bg-orange-600 text-white px-4 py-2 z-50">
+        <div className="flex items-center justify-between bg-orange-600 text-white px-4 py-2 z-50 mt-14">
           <span className="font-semibold text-sm md:text-base">
             We do NOT support mobile yet. Use with caution.
           </span>
@@ -65,7 +69,7 @@ export default function Chatbot() {
       {/* Overlay when sidebar is open on mobile */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          className="fixed inset-0 top-14 bg-black/50 z-30 md:hidden"
           onClick={toggleSidebar}
         />
       )}
@@ -80,18 +84,6 @@ export default function Chatbot() {
         toggleSidebar={toggleSidebar}
         onNewChat={handleNewChat}
       />
-
-      {/* Mobile-only hamburger button when sidebar is closed.
-          If banner is visible, push it further down with top-16. Otherwise top-4. */}
-      {!sidebarOpen && (
-        <button
-          onClick={toggleSidebar}
-          className={`absolute left-4 z-50 p-2 bg-gray-800 rounded-md text-gray-300 md:hidden
-            ${showMobileWarning ? "top-16" : "top-4"}`}
-        >
-          <Menu className="w-6 h-6" />
-        </button>
-      )}
 
       {/* Main content area */}
       <div className={`flex-1 md:ml-64 flex flex-col ${

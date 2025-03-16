@@ -28,8 +28,8 @@ export default function Sidebar({
   return (
     <div
       className={`
-        fixed top-0 left-0 z-40
-        h-[100dvh]
+        fixed top-14 left-0 z-40
+        h-[calc(100dvh-3.5rem)]
         bg-[#1a1a1a]
         border-r border-gray-800
         flex flex-col
@@ -42,14 +42,7 @@ export default function Sidebar({
         }
       `}
     >
-      {/* Header */}
-      <div className="shrink-0 p-4 border-b border-gray-800 flex items-center justify-between">
-        <h1 className="text-base md:text-lg font-medium">LAG.AI</h1>
-        {/* Close button only on mobile (md:hidden) */}
-        <button onClick={toggleSidebar} className="text-gray-300 md:hidden">
-          <X className="w-5 h-5" />
-        </button>
-      </div>
+
 
       {/* New Chat Button */}
       <button
