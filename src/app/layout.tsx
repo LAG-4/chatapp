@@ -26,6 +26,15 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "LAG AI | Access multiple chatbots in one place",
   description: "AI Chatbot app created by Aryan",
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+    shortcut: ['/favicon.svg'],
+    apple: [
+      { url: '/favicon.svg' }
+    ],
+  },
 };
 
 export default function RootLayout({
