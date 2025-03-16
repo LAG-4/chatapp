@@ -301,8 +301,15 @@ export default function DocumentPage() {
           />
         </div>
 
+        {/* Warning Banner */}
+        <div className="fixed top-16 left-0 right-0 z-40 bg-amber-500/90 text-black py-2 px-4 text-center backdrop-blur-sm">
+          <p className="font-medium">
+            ⚠️ This feature is experimental and may show errors. Please refresh the page if it doesn't work properly.
+          </p>
+        </div>
+
         {/* Login prompt */}
-        <div className="relative z-10 flex items-center justify-center min-h-screen px-4">
+        <div className="relative z-10 flex items-center justify-center min-h-screen px-4 pt-12">
           <div className="bg-[#1a1a1a]/90 backdrop-blur-sm rounded-lg p-8 max-w-md w-full text-center">
             <FileText className="w-16 h-16 mx-auto mb-6 text-[#02ece9]" />
             <h2 className="text-2xl font-bold mb-4">Sign in Required</h2>
@@ -383,8 +390,15 @@ export default function DocumentPage() {
         />
       </div>
 
-      {/* Content - Add padding-top to account for fixed navbar */}
-      <div className="relative z-10 flex flex-col lg:flex-row min-h-screen pt-16">
+      {/* Warning Banner */}
+      <div className="fixed top-16 left-0 right-0 z-40 bg-amber-500/90 text-black py-2 px-4 text-center backdrop-blur-sm">
+        <p className="font-medium">
+          ⚠️ This feature is experimental and may show errors. Please refresh the page if it doesn't work properly.
+        </p>
+      </div>
+
+      {/* Content - Add padding-top to account for fixed navbar and warning banner */}
+      <div className="relative z-10 flex flex-col lg:flex-row min-h-screen pt-28">
         {/* Sidebar - Only visible on desktop */}
         <div className="hidden lg:block w-64 bg-[#1a1a1a] border-r border-gray-800">
          
