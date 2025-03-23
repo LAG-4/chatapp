@@ -24,3 +24,9 @@
 - [ ] Complete agents
 - [x] Change answer bubbles
 - [x] Add copy response button and ask again button for answer
+
+
+
+## New Branch
+- [ ] Update the chat UI to vercel AI SDK
+- [ ] Update the api to something like openrouter
