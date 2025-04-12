@@ -18,7 +18,7 @@
 }
 
 body {
-  color: var(--foreground);
+
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
@@ -80,4 +80,54 @@ code {
   background-color: #34302a !important;
   border-radius: 0.25rem;
   padding: 0.125rem 0.25rem;
+}
+
+/* Blog code block styling */
+.prose pre {
+  background-color: #282c34;
+  color: #e6e6e6;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.prose code {
+  color: #4a5568;
+  background-color: #f7fafc;
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+  font-size: 0.9em;
+}
+
+.prose pre code {
+  color: #e6e6e6;
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
+/* Improve overall blog text readability */
+.prose p {
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+  line-height: 1.8;
+}
+
+.prose ul,
+.prose ol {
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+}
+
+.prose li {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+/* Dark mode improvements */
+@media (prefers-color-scheme: dark) {
+  .prose code:not(pre code) {
+    background-color: rgba(209, 213, 219, 0.1);
+    color: #e5e7eb;
+  }
 }
