@@ -24,6 +24,7 @@
 - [ ] Complete agents
 - [x] Change answer bubbles
 - [x] Add copy response button and ask again button for answer
+- [x] Add blog subdomain (blog.lagaryan.click)
 
 
 

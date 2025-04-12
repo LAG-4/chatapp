@@ -1,6 +1,23 @@
 import { clerkMiddleware } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export default clerkMiddleware();
+const middleware = (req: NextRequest) => {
+  const url = req.nextUrl;
+  const hostname = req.headers.get("host") || "";
+  
+  // Check for blog subdomain
+  if (hostname.startsWith("blog.")) {
+    // Rewrite the URL for blog subdomain
+    url.pathname = `/blog${url.pathname}`;
+    return NextResponse.rewrite(url);
+  }
+  
+  // Continue with Clerk middleware for other routes
+  return clerkMiddleware()(req);
+};
+
+export default middleware;
 
 export const config = {
   matcher: [
